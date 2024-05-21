@@ -14,11 +14,17 @@ function addCustomDropdownButton() {
             button.style.borderRadius = '4px';
             button.style.cursor = 'pointer';
 
+            // Получаем номер кейса и шага
+            const testCaseIdElement = document.querySelector('.TestCaseLayout__id');
+            const testCaseId = testCaseIdElement ? testCaseIdElement.innerText.replace('#', '') : '';
+            const stepNumberElement = testCaseElement.querySelector('.TestCaseStepRow__numbering');
+            const stepNumber = stepNumberElement ? stepNumberElement.innerText : '';
+
             // Добавляем обработчик событий для кнопки
             button.addEventListener('click', (event) => {
                 event.stopPropagation();
                 event.preventDefault();
-                toggleDropdown(testCaseElement);
+                toggleDropdown(testCaseElement, testCaseId, stepNumber, button);
             });
 
             const wrapper = testCaseElement.querySelector('.TestCaseScenarioStepEdit__wrapper');
@@ -30,7 +36,7 @@ function addCustomDropdownButton() {
 }
 
 // Функция для создания и отображения выпадающего списка
-function toggleDropdown(parentElement) {
+function toggleDropdown(parentElement, testCaseId, stepNumber, button) {
     let dropdown = parentElement.querySelector('.custom-dropdown');
     if (dropdown) {
         dropdown.remove();
@@ -46,6 +52,10 @@ function toggleDropdown(parentElement) {
     dropdown.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
     dropdown.style.zIndex = '1000';
 
+    const rect = button.getBoundingClientRect();
+    dropdown.style.top = `${rect.bottom + window.scrollY}px`;
+    dropdown.style.left = `${rect.left + window.scrollX}px`;
+
     const options = ['Kafka Producer', 'Kafka Consumer', 'DB', 'REST', 'Kibana'];
     options.forEach(option => {
         const item = document.createElement('div');
@@ -54,22 +64,24 @@ function toggleDropdown(parentElement) {
         item.style.cursor = 'pointer';
 
         item.addEventListener('click', () => {
-            openPopup(option);
+            openPopup(testCaseId, stepNumber, option);
             dropdown.remove();
         });
 
         dropdown.appendChild(item);
     });
 
-    parentElement.appendChild(dropdown);
+    document.body.appendChild(dropdown);
 }
 
 // Функция для открытия всплывающего окна
-function openPopup(selectedOption) {
+function openPopup(testCaseId, stepNumber, selectedOption) {
     const popup = document.createElement('div');
     popup.innerHTML = `
       <div style="position: fixed; top: 20%; left: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid #ccc; padding: 20px; z-index: 1001;">
         <p>Selected option: ${selectedOption}</p>
+        <p>Test case ID: ${testCaseId}</p>
+        <p>Step number: ${stepNumber}</p>
         <textarea id="textInput" style="width: 300px; height: 100px;"></textarea>
         <br>
         <button id="submitBtn" style="margin-top: 10px; padding: 5px 10px; background-color: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">Submit</button>
@@ -79,15 +91,17 @@ function openPopup(selectedOption) {
 
     document.getElementById('submitBtn').addEventListener('click', () => {
         const text = document.getElementById('textInput').value;
-        showRequestBody(text, selectedOption);
+        showRequestBody(text, testCaseId, stepNumber, selectedOption);
         document.body.removeChild(popup);
     });
 }
 
 // Функция для отображения тела запроса во всплывающем окне
-function showRequestBody(text, selectedOption) {
+function showRequestBody(text, testCaseId, stepNumber, selectedOption) {
     const requestBody = {
         text: text,
+        testCaseId: testCaseId,
+        stepNumber: stepNumber,
         selectedOption: selectedOption
     };
 
