@@ -1,45 +1,73 @@
-// Функция для добавления новой кнопки в меню
-function addSendToServerButton(menu, testCaseId, stepNumber) {
-    // Проверим, нет ли уже кнопки в меню
-    if (menu.querySelector(`[data-testid="menu_item__send_to_server_${testCaseId}_${stepNumber}"]`)) {
+// Функция для добавления новой кнопки рядом с выпадающим списком
+function addCustomDropdownButton() {
+    const testCaseElements = document.querySelectorAll('.TreeElement__node');
+    testCaseElements.forEach(testCaseElement => {
+        if (!testCaseElement.querySelector('.custom-dropdown-button')) {
+            const button = document.createElement('button');
+            button.innerText = 'Custom Actions';
+            button.className = 'custom-dropdown-button';
+            button.style.marginLeft = '10px';
+            button.style.padding = '5px 10px';
+            button.style.backgroundColor = '#4285F4';
+            button.style.color = 'white';
+            button.style.border = 'none';
+            button.style.borderRadius = '4px';
+            button.style.cursor = 'pointer';
+
+            // Добавляем обработчик событий для кнопки
+            button.addEventListener('click', (event) => {
+                event.stopPropagation();
+                toggleDropdown(testCaseElement);
+            });
+
+            const wrapper = testCaseElement.querySelector('.TestCaseScenarioStepEdit__wrapper');
+            if (wrapper) {
+                wrapper.appendChild(button);
+            }
+        }
+    });
+}
+
+// Функция для создания и отображения выпадающего списка
+function toggleDropdown(parentElement) {
+    let dropdown = parentElement.querySelector('.custom-dropdown');
+    if (dropdown) {
+        dropdown.remove();
         return;
     }
 
-    const newItem = document.createElement('div');
-    newItem.tabIndex = 0;
-    newItem.role = 'button';
-    newItem.className = 'Menu__item';
-    newItem.dataset.testid = `menu_item__send_to_server_${testCaseId}_${stepNumber}`;
+    dropdown = document.createElement('div');
+    dropdown.className = 'custom-dropdown';
+    dropdown.style.position = 'absolute';
+    dropdown.style.backgroundColor = 'white';
+    dropdown.style.border = '1px solid #ccc';
+    dropdown.style.padding = '10px';
+    dropdown.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
 
-    // Создаем внутреннюю структуру элемента меню
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.classList.add('Icon', 'Icon_size_tiny');
-    svg.setAttribute('viewBox', '0 0 32 32');
+    const options = ['Kafka Producer', 'Kafka Consumer', 'DB', 'REST', 'Kibana'];
+    options.forEach(option => {
+        const item = document.createElement('div');
+        item.innerText = option;
+        item.style.padding = '5px 0';
+        item.style.cursor = 'pointer';
 
-    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
-    use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#send');
-    svg.appendChild(use);
+        item.addEventListener('click', () => {
+            openPopup(option);
+            dropdown.remove();
+        });
 
-    const span = document.createElement('span');
-    span.innerHTML = `&nbsp;Отправить на сервер (${testCaseId}-${stepNumber})`;
-
-    newItem.appendChild(svg);
-    newItem.appendChild(span);
-
-    // Добавляем обработчик событий для кнопки
-    newItem.addEventListener('click', () => {
-        openPopup(testCaseId, stepNumber);
+        dropdown.appendChild(item);
     });
 
-    // Вставим новый элемент в конец меню
-    menu.appendChild(newItem);
+    parentElement.appendChild(dropdown);
 }
 
 // Функция для открытия всплывающего окна
-function openPopup(testCaseId, stepNumber) {
+function openPopup(selectedOption) {
     const popup = document.createElement('div');
     popup.innerHTML = `
       <div style="position: fixed; top: 20%; left: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid #ccc; padding: 20px; z-index: 1001;">
+        <p>Selected option: ${selectedOption}</p>
         <textarea id="textInput" style="width: 300px; height: 100px;"></textarea>
         <br>
         <button id="submitBtn" style="margin-top: 10px; padding: 5px 10px; background-color: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">Submit</button>
@@ -49,17 +77,16 @@ function openPopup(testCaseId, stepNumber) {
 
     document.getElementById('submitBtn').addEventListener('click', () => {
         const text = document.getElementById('textInput').value;
-        showRequestBody(text, testCaseId, stepNumber);
+        showRequestBody(text, selectedOption);
         document.body.removeChild(popup);
     });
 }
 
 // Функция для отображения тела запроса во всплывающем окне
-function showRequestBody(text, testCaseId, stepNumber) {
+function showRequestBody(text, selectedOption) {
     const requestBody = {
         text: text,
-        testCaseId: testCaseId,
-        stepNumber: stepNumber
+        selectedOption: selectedOption
     };
 
     const popup = document.createElement('div');
@@ -77,23 +104,5 @@ function showRequestBody(text, testCaseId, stepNumber) {
     });
 }
 
-// Функция для проверки появления меню
-function checkForMenu() {
-    const testCaseIdElement = document.querySelector('.TestCaseLayout__id');
-    if (!testCaseIdElement) return;
-
-    const testCaseId = testCaseIdElement.innerText.replace('#', '');
-
-    const testCaseElements = document.querySelectorAll('.TreeElement__node');
-    testCaseElements.forEach((testCaseElement, index) => {
-        const stepNumber = index + 1; // Определяем номер шага на основе индекса в списке
-        const menu = document.querySelector('.tippy-content');
-        if (menu && !menu.dataset.processed) {
-            menu.dataset.processed = true; // Помечаем меню как обработанное
-            addSendToServerButton(menu, testCaseId, stepNumber);
-        }
-    });
-}
-
-// Проверяем наличие меню каждые 500 миллисекунд
-setInterval(checkForMenu, 500);
+// Проверяем наличие элементов каждые 500 миллисекунд
+setInterval(addCustomDropdownButton, 500);
