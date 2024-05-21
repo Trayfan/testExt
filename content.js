@@ -97,12 +97,5 @@ function checkForMenu() {
     });
 }
 
-// Используем MutationObserver для отслеживания изменений в DOM и добавления кнопки при появлении меню
-const observer = new MutationObserver(() => {
-    checkForMenu();
-});
-
-observer.observe(document.body, {
-    childList: true,
-    subtree: true
-});
+// Проверяем наличие меню каждые 500 миллисекунд
+setInterval(checkForMenu, 500);
