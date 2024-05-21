@@ -1,40 +1,36 @@
-window.addEventListener('load', () => {
-    // Подождем, пока страница полностью загрузится
-    setTimeout(() => {
-        const menu = document.querySelector('.tippy-content'); // Найдем элемент меню
-        if (menu) {
-            const newItem = document.createElement('div');
-            newItem.tabIndex = 0;
-            newItem.role = 'button';
-            newItem.className = 'Menu__item';
-            newItem.dataset.testid = 'menu_item__send_to_server';
+// Функция для добавления новой кнопки в меню
+function addSendToServerButton(menu) {
+    const newItem = document.createElement('div');
+    newItem.tabIndex = 0;
+    newItem.role = 'button';
+    newItem.className = 'Menu__item';
+    newItem.dataset.testid = 'menu_item__send_to_server';
 
-            // Создаем внутреннюю структуру элемента меню
-            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            svg.classList.add('Icon', 'Icon_size_tiny');
-            svg.setAttribute('viewBox', '0 0 32 32');
+    // Создаем внутреннюю структуру элемента меню
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.classList.add('Icon', 'Icon_size_tiny');
+    svg.setAttribute('viewBox', '0 0 32 32');
 
-            const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
-            use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#send');
-            svg.appendChild(use);
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#send');
+    svg.appendChild(use);
 
-            const span = document.createElement('span');
-            span.innerHTML = '&nbsp;Отправить на сервер';
+    const span = document.createElement('span');
+    span.innerHTML = '&nbsp;Отправить на сервер';
 
-            newItem.appendChild(svg);
-            newItem.appendChild(span);
+    newItem.appendChild(svg);
+    newItem.appendChild(span);
 
-            // Добавляем обработчик событий для кнопки
-            newItem.addEventListener('click', () => {
-                openPopup();
-            });
+    // Добавляем обработчик событий для кнопки
+    newItem.addEventListener('click', () => {
+        openPopup();
+    });
 
-            // Вставим новый элемент в конец меню
-            menu.appendChild(newItem);
-        }
-    }, 1000); // Задержка в 1 секунду для того, чтобы страница точно успела полностью загрузиться
-});
+    // Вставим новый элемент в конец меню
+    menu.appendChild(newItem);
+}
 
+// Функция для открытия всплывающего окна
 function openPopup() {
     const popup = document.createElement('div');
     popup.innerHTML = `
@@ -53,6 +49,7 @@ function openPopup() {
     });
 }
 
+// Функция для отправки данных на сервер
 function sendToServer(text) {
     fetch('http://localhost:3000/submit', {
         method: 'POST',
@@ -69,3 +66,21 @@ function sendToServer(text) {
             console.error('Error:', error);
         });
 }
+
+// Используем MutationObserver для отслеживания изменений в DOM и добавления кнопки при появлении меню
+const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        if (mutation.addedNodes) {
+            mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === 1 && node.classList.contains('tippy-content')) {
+                    addSendToServerButton(node);
+                }
+            });
+        }
+    });
+});
+
+observer.observe(document.body, {
+    childList: true,
+    subtree: true
+});
