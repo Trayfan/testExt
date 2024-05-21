@@ -17,12 +17,13 @@ function addCustomDropdownButton() {
             // Добавляем обработчик событий для кнопки
             button.addEventListener('click', (event) => {
                 event.stopPropagation();
+                event.preventDefault();
                 toggleDropdown(testCaseElement);
             });
 
             const wrapper = testCaseElement.querySelector('.TestCaseScenarioStepEdit__wrapper');
             if (wrapper) {
-                wrapper.appendChild(button);
+                wrapper.parentNode.insertBefore(button, wrapper.nextSibling);
             }
         }
     });
@@ -43,6 +44,7 @@ function toggleDropdown(parentElement) {
     dropdown.style.border = '1px solid #ccc';
     dropdown.style.padding = '10px';
     dropdown.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+    dropdown.style.zIndex = '1000';
 
     const options = ['Kafka Producer', 'Kafka Consumer', 'DB', 'REST', 'Kibana'];
     options.forEach(option => {
