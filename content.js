@@ -85,15 +85,12 @@ function checkForMenu() {
     const testCaseId = testCaseIdElement.innerText.replace('#', '');
 
     const testCaseElements = document.querySelectorAll('.TreeElement__node');
-    testCaseElements.forEach(testCaseElement => {
-        const stepNumberElement = testCaseElement.querySelector('.TestCaseStepRow__numbering');
-        if (stepNumberElement) {
-            const stepNumber = stepNumberElement.innerText;
-            const menu = document.querySelector('.tippy-content');
-            if (menu && !menu.dataset.processed) {
-                menu.dataset.processed = true; // Помечаем меню как обработанное
-                addSendToServerButton(menu, testCaseId, stepNumber);
-            }
+    testCaseElements.forEach((testCaseElement, index) => {
+        const stepNumber = index + 1; // Определяем номер шага на основе индекса в списке
+        const menu = document.querySelector('.tippy-content');
+        if (menu && !menu.dataset.processed) {
+            menu.dataset.processed = true; // Помечаем меню как обработанное
+            addSendToServerButton(menu, testCaseId, stepNumber);
         }
     });
 }
