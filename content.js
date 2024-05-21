@@ -79,19 +79,20 @@ function showRequestBody(text, testCaseId, stepNumber) {
 
 // Функция для проверки появления меню
 function checkForMenu() {
+    const testCaseIdElement = document.querySelector('.TestCaseLayout__id');
+    if (!testCaseIdElement) return;
+
+    const testCaseId = testCaseIdElement.innerText.replace('#', '');
+
     const testCaseElements = document.querySelectorAll('.TreeElement__node');
     testCaseElements.forEach(testCaseElement => {
-        const testCaseIdElement = testCaseElement.closest('.TreeElement').querySelector('.TestCaseLayout__id');
-        if (testCaseIdElement) {
-            const testCaseId = testCaseIdElement.innerText.replace('#', '');
-            const stepNumberElement = testCaseElement.querySelector('.TestCaseStepRow__numbering');
-            if (stepNumberElement) {
-                const stepNumber = stepNumberElement.innerText;
-                const menu = testCaseElement.querySelector('.tippy-content');
-                if (menu && !menu.dataset.processed) {
-                    menu.dataset.processed = true; // Помечаем меню как обработанное
-                    addSendToServerButton(menu, testCaseId, stepNumber);
-                }
+        const stepNumberElement = testCaseElement.querySelector('.TestCaseStepRow__numbering');
+        if (stepNumberElement) {
+            const stepNumber = stepNumberElement.innerText;
+            const menu = document.querySelector('.tippy-content');
+            if (menu && !menu.dataset.processed) {
+                menu.dataset.processed = true; // Помечаем меню как обработанное
+                addSendToServerButton(menu, testCaseId, stepNumber);
             }
         }
     });
