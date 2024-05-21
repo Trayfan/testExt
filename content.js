@@ -1,9 +1,7 @@
-let dropdownCount = 0; // Счетчик для уникальных идентификаторов
-
 // Функция для добавления новой кнопки в меню
-function addSendToServerButton(menu, id) {
+function addSendToServerButton(menu, testCaseId, stepNumber) {
     // Проверим, нет ли уже кнопки в меню
-    if (menu.querySelector(`[data-testid="menu_item__send_to_server_${id}"]`)) {
+    if (menu.querySelector(`[data-testid="menu_item__send_to_server_${testCaseId}_${stepNumber}"]`)) {
         return;
     }
 
@@ -11,7 +9,7 @@ function addSendToServerButton(menu, id) {
     newItem.tabIndex = 0;
     newItem.role = 'button';
     newItem.className = 'Menu__item';
-    newItem.dataset.testid = `menu_item__send_to_server_${id}`;
+    newItem.dataset.testid = `menu_item__send_to_server_${testCaseId}_${stepNumber}`;
 
     // Создаем внутреннюю структуру элемента меню
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -23,14 +21,14 @@ function addSendToServerButton(menu, id) {
     svg.appendChild(use);
 
     const span = document.createElement('span');
-    span.innerHTML = `&nbsp;Отправить на сервер (${id})`;
+    span.innerHTML = `&nbsp;Отправить на сервер (${testCaseId}-${stepNumber})`;
 
     newItem.appendChild(svg);
     newItem.appendChild(span);
 
     // Добавляем обработчик событий для кнопки
     newItem.addEventListener('click', () => {
-        openPopup(id);
+        openPopup(testCaseId, stepNumber);
     });
 
     // Вставим новый элемент в конец меню
@@ -38,54 +36,73 @@ function addSendToServerButton(menu, id) {
 }
 
 // Функция для открытия всплывающего окна
-function openPopup(id) {
+function openPopup(testCaseId, stepNumber) {
     const popup = document.createElement('div');
     popup.innerHTML = `
-    <div style="position: fixed; top: 20%; left: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid #ccc; padding: 20px; z-index: 1001;">
-      <textarea id="textInput" style="width: 300px; height: 100px;"></textarea>
-      <br>
-      <button id="submitBtn" style="margin-top: 10px; padding: 5px 10px; background-color: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">Submit</button>
-    </div>
-  `;
+      <div style="position: fixed; top: 20%; left: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid #ccc; padding: 20px; z-index: 1001;">
+        <textarea id="textInput" style="width: 300px; height: 100px;"></textarea>
+        <br>
+        <button id="submitBtn" style="margin-top: 10px; padding: 5px 10px; background-color: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">Submit</button>
+      </div>
+    `;
     document.body.appendChild(popup);
 
     document.getElementById('submitBtn').addEventListener('click', () => {
         const text = document.getElementById('textInput').value;
-        sendToServer(text, id);
+        showRequestBody(text, testCaseId, stepNumber);
         document.body.removeChild(popup);
     });
 }
 
-// Функция для отправки данных на сервер
-function sendToServer(text, id) {
-    fetch('http://localhost:3000/submit', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ text: text, dropdownId: id })
-    })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Success:', data);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
+// Функция для отображения тела запроса во всплывающем окне
+function showRequestBody(text, testCaseId, stepNumber) {
+    const requestBody = {
+        text: text,
+        testCaseId: testCaseId,
+        stepNumber: stepNumber
+    };
+
+    const popup = document.createElement('div');
+    popup.innerHTML = `
+      <div style="position: fixed; top: 20%; left: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid #ccc; padding: 20px; z-index: 1001; max-height: 80%; overflow-y: auto;">
+        <pre style="white-space: pre-wrap;">${JSON.stringify(requestBody, null, 2)}</pre>
+        <br>
+        <button id="closeBtn" style="margin-top: 10px; padding: 5px 10px; background-color: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
+      </div>
+    `;
+    document.body.appendChild(popup);
+
+    document.getElementById('closeBtn').addEventListener('click', () => {
+        document.body.removeChild(popup);
+    });
 }
 
 // Функция для проверки появления меню
 function checkForMenu() {
-    const menus = document.querySelectorAll('.tippy-content');
-    menus.forEach((menu, index) => {
-        if (!menu.dataset.processed) {
-            dropdownCount += 1;
-            const id = dropdownCount; // Уникальный идентификатор для каждого меню
-            menu.dataset.processed = true; // Помечаем меню как обработанное
-            addSendToServerButton(menu, id);
+    const testCaseElements = document.querySelectorAll('.TreeElement__node');
+    testCaseElements.forEach(testCaseElement => {
+        const testCaseIdElement = testCaseElement.closest('.TreeElement').querySelector('.TestCaseLayout__id');
+        if (testCaseIdElement) {
+            const testCaseId = testCaseIdElement.innerText.replace('#', '');
+            const stepNumberElement = testCaseElement.querySelector('.TestCaseStepRow__numbering');
+            if (stepNumberElement) {
+                const stepNumber = stepNumberElement.innerText;
+                const menu = testCaseElement.querySelector('.tippy-content');
+                if (menu && !menu.dataset.processed) {
+                    menu.dataset.processed = true; // Помечаем меню как обработанное
+                    addSendToServerButton(menu, testCaseId, stepNumber);
+                }
+            }
         }
     });
 }
 
-// Проверяем наличие меню каждые 500 миллисекунд
-setInterval(checkForMenu, 500);
+// Используем MutationObserver для отслеживания изменений в DOM и добавления кнопки при появлении меню
+const observer = new MutationObserver(() => {
+    checkForMenu();
+});
+
+observer.observe(document.body, {
+    childList: true,
+    subtree: true
+});
