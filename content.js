@@ -1,107 +1,93 @@
-// Функция для добавления новой кнопки рядом с выпадающим списком
-function addCustomDropdownButton() {
-    const testCaseElements = document.querySelectorAll('.TreeElement__node');
-    testCaseElements.forEach(testCaseElement => {
-        if (!testCaseElement.querySelector('.custom-dropdown-button')) {
-            const button = document.createElement('button');
-            button.innerText = 'Custom Actions';
-            button.className = 'custom-dropdown-button';
-            button.style.marginLeft = '10px';
-            button.style.padding = '5px 10px';
-            button.style.backgroundColor = '#4285F4';
-            button.style.color = 'white';
-            button.style.border = 'none';
-            button.style.borderRadius = '4px';
-            button.style.cursor = 'pointer';
+// Функция для добавления новых кнопок в меню
+function addCustomButtons() {
+    const sideMenu = document.querySelector('.SideMenu__list');
+    if (!sideMenu || document.querySelector('.env-button')) return;
 
-            // Получаем номер кейса и шага
-            const testCaseIdElement = document.querySelector('.TestCaseLayout__id');
-            const testCaseId = testCaseIdElement ? testCaseIdElement.innerText.replace('#', '') : '';
-            const stepNumberElement = testCaseElement.querySelector('.TestCaseStepRow__numbering');
-            const stepNumber = stepNumberElement ? stepNumberElement.innerText : '';
+    // Создание кнопки для управления окружениями
+    const manageEnvButton = document.createElement('button');
+    manageEnvButton.innerText = 'Manage Envs';
+    manageEnvButton.className = 'Button Button_size_base Button_style_default Button_shape_rectangular env-button';
+    manageEnvButton.style.cursor = 'pointer';
+    manageEnvButton.style.marginRight = '10px';
 
-            // Добавляем обработчик событий для кнопки
-            button.addEventListener('click', (event) => {
-                event.stopPropagation();
-                event.preventDefault();
-                toggleDropdown(testCaseElement, testCaseId, stepNumber, button);
-            });
-
-            const wrapper = testCaseElement.querySelector('.TestCaseScenarioStepEdit__wrapper');
-            if (wrapper) {
-                wrapper.parentNode.insertBefore(button, wrapper.nextSibling);
-            }
-        }
+    manageEnvButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        openEnvPopup();
     });
+
+    // Создание кнопки для отправки текста на сервер
+    const sendToServerButton = document.createElement('button');
+    sendToServerButton.innerText = 'Send to Server';
+    sendToServerButton.className = 'Button Button_size_base Button_style_default Button_shape_rectangular send-button';
+    sendToServerButton.style.cursor = 'pointer';
+
+    sendToServerButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        openSendPopup();
+    });
+
+    const li = document.createElement('li');
+    li.className = 'SideMenu__list-item';
+
+    li.appendChild(manageEnvButton);
+    li.appendChild(sendToServerButton);
+    sideMenu.appendChild(li);
 }
 
-// Функция для создания и отображения выпадающего списка
-function toggleDropdown(parentElement, testCaseId, stepNumber, button) {
-    // Закрыть любые другие открытые выпадающие списки
-    document.querySelectorAll('.custom-dropdown').forEach(dropdown => {
-        dropdown.remove();
-    });
+// Функция для открытия всплывающего окна управления окружениями
+function openEnvPopup() {
+    const existingPopup = document.querySelector('.env-popup');
+    if (existingPopup) existingPopup.remove();
 
-    let dropdown = parentElement.querySelector('.custom-dropdown');
-    if (dropdown) {
-        dropdown.remove();
-        return;
-    }
+    const popup = document.createElement('div');
+    popup.className = 'env-popup';
+    popup.style.position = 'fixed';
+    popup.style.top = '20%';
+    popup.style.left = '50%';
+    popup.style.transform = 'translate(-50%, -20%)';
+    popup.style.backgroundColor = 'white';
+    popup.style.border = '1px solid #ccc';
+    popup.style.padding = '20px';
+    popup.style.zIndex = '1001';
+    popup.style.display = 'flex';
+    popup.style.maxHeight = '70%';
+    popup.style.overflowY = 'auto';
 
-    dropdown = document.createElement('div');
-    dropdown.className = 'custom-dropdown';
-    dropdown.style.position = 'absolute';
-    dropdown.style.backgroundColor = 'white';
-    dropdown.style.border = '1px solid #ccc';
-    dropdown.style.padding = '10px';
-    dropdown.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
-    dropdown.style.zIndex = '1000';
+    const envList = document.createElement('div');
+    envList.style.flex = '1';
+    envList.style.marginRight = '20px';
+    envList.innerHTML = `
+      <h3>Environments</h3>
+      <ul class="env-list"></ul>
+      <button class="add-env-button">Add Environment</button>
+    `;
+    popup.appendChild(envList);
 
-    const rect = button.getBoundingClientRect();
-    dropdown.style.top = `${rect.bottom + window.scrollY}px`;
-    dropdown.style.left = `${rect.left + window.scrollX}px`;
+    const envDetails = document.createElement('div');
+    envDetails.style.flex = '2';
+    envDetails.innerHTML = `
+      <h3>Variables</h3>
+      <ul class="env-details"></ul>
+      <button class="add-var-button">Add Variable</button>
+    `;
+    popup.appendChild(envDetails);
 
-    const options = ['Kafka Producer', 'Kafka Consumer', 'DB', 'REST', 'Kibana'];
-    options.forEach(option => {
-        const item = document.createElement('div');
-        item.innerText = option;
-        item.style.padding = '5px 0';
-        item.style.cursor = 'pointer';
+    document.body.appendChild(popup);
 
-        // Добавляем обработчик для выделения при наведении
-        item.addEventListener('mouseenter', () => {
-            item.style.backgroundColor = '#f0f0f0';
-        });
-        item.addEventListener('mouseleave', () => {
-            item.style.backgroundColor = 'white';
-        });
-
-        item.addEventListener('click', () => {
-            openPopup(testCaseId, stepNumber, option);
-            dropdown.remove();
-        });
-
-        dropdown.appendChild(item);
-    });
-
-    document.body.appendChild(dropdown);
-
-    // Добавляем обработчик для закрытия выпадающего списка при клике вне его
     document.addEventListener('click', (event) => {
-        if (!dropdown.contains(event.target) && !button.contains(event.target)) {
-            dropdown.remove();
+        if (!popup.contains(event.target) && !event.target.classList.contains('env-button')) {
+            popup.remove();
         }
     }, { once: true });
+
+    addEnvPopupEventListeners(popup);
 }
 
-// Функция для открытия всплывающего окна
-function openPopup(testCaseId, stepNumber, selectedOption) {
+// Функция для открытия всплывающего окна для отправки текста на сервер
+function openSendPopup() {
     const popup = document.createElement('div');
     popup.innerHTML = `
-      <div style="position: fixed; top: 20%; left: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid #ccc; padding: 20px; z-index: 1001;">
-        <p>Selected option: ${selectedOption}</p>
-        <p>Test case ID: ${testCaseId}</p>
-        <p>Step number: ${stepNumber}</p>
+      <div style="position: fixed; top: 20%; left: 50%; transform: translate(-50%, -20%); background: white; border: 1px solid #ccc; padding: 20px; z-index: 1001;">
         <textarea id="textInput" style="width: 300px; height: 100px;"></textarea>
         <br>
         <button id="submitBtn" style="margin-top: 10px; padding: 5px 10px; background-color: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">Submit</button>
@@ -111,23 +97,20 @@ function openPopup(testCaseId, stepNumber, selectedOption) {
 
     document.getElementById('submitBtn').addEventListener('click', () => {
         const text = document.getElementById('textInput').value;
-        showRequestBody(text, testCaseId, stepNumber, selectedOption);
+        showRequestBody(text);
         document.body.removeChild(popup);
     });
 }
 
 // Функция для отображения тела запроса во всплывающем окне
-function showRequestBody(text, testCaseId, stepNumber, selectedOption) {
+function showRequestBody(text) {
     const requestBody = {
-        text: text,
-        testCaseId: testCaseId,
-        stepNumber: stepNumber,
-        selectedOption: selectedOption
+        text: text
     };
 
     const popup = document.createElement('div');
     popup.innerHTML = `
-      <div style="position: fixed; top: 20%; left: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid #ccc; padding: 20px; z-index: 1001; max-height: 80%; overflow-y: auto;">
+      <div style="position: fixed; top: 20%; left: 50%; transform: translate(-50%, -20%); background: white; border: 1px solid #ccc; padding: 20px; z-index: 1001; max-height: 80%; overflow-y: auto;">
         <pre style="white-space: pre-wrap;">${JSON.stringify(requestBody, null, 2)}</pre>
         <br>
         <button id="closeBtn" style="margin-top: 10px; padding: 5px 10px; background-color: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
@@ -140,5 +123,108 @@ function showRequestBody(text, testCaseId, stepNumber, selectedOption) {
     });
 }
 
-// Проверяем наличие элементов каждые 500 миллисекунд
-setInterval(addCustomDropdownButton, 500);
+// Функция для добавления обработчиков событий в всплывающее окно
+function addEnvPopupEventListeners(popup) {
+    const addEnvButton = popup.querySelector('.add-env-button');
+    const envList = popup.querySelector('.env-list');
+    const envDetails = popup.querySelector('.env-details');
+
+    let environments = JSON.parse(localStorage.getItem('environments')) || [];
+
+    function saveEnvironments() {
+        localStorage.setItem('environments', JSON.stringify(environments));
+    }
+
+    function renderEnvList() {
+        envList.innerHTML = '';
+        environments.forEach((env, index) => {
+            const li = document.createElement('li');
+            li.innerText = env.name;
+            li.style.cursor = 'pointer';
+
+            li.addEventListener('click', () => {
+                renderEnvDetails(index);
+            });
+
+            const deleteButton = document.createElement('button');
+            deleteButton.innerText = 'Delete';
+            deleteButton.style.marginLeft = '10px';
+            deleteButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                environments.splice(index, 1);
+                saveEnvironments();
+                renderEnvList();
+                envDetails.innerHTML = '<h3>Variables</h3><ul class="env-details"></ul><button class="add-var-button">Add Variable</button>';
+            });
+
+            li.appendChild(deleteButton);
+            envList.appendChild(li);
+        });
+    }
+
+    function renderEnvDetails(envIndex) {
+        const env = environments[envIndex];
+        envDetails.innerHTML = `
+        <h3>${env.name} Variables</h3>
+        <ul class="env-details">
+          ${env.variables.map((variable, varIndex) => `
+            <li>
+              <input type="text" value="${variable.name}" data-index="${varIndex}" class="var-name" placeholder="Name" />
+              <input type="text" value="${variable.value}" data-index="${varIndex}" class="var-value" placeholder="Value" />
+              <button data-index="${varIndex}" class="delete-var-button">Delete</button>
+            </li>
+          `).join('')}
+        </ul>
+        <button class="add-var-button">Add Variable</button>
+      `;
+
+        const addVarButton = envDetails.querySelector('.add-var-button');
+        addVarButton.addEventListener('click', () => {
+            env.variables.push({ name: '', value: '' });
+            saveEnvironments();
+            renderEnvDetails(envIndex);
+        });
+
+        const varNameInputs = envDetails.querySelectorAll('.var-name');
+        const varValueInputs = envDetails.querySelectorAll('.var-value');
+        varNameInputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                const varIndex = e.target.dataset.index;
+                env.variables[varIndex].name = e.target.value;
+                saveEnvironments();
+            });
+        });
+        varValueInputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                const varIndex = e.target.dataset.index;
+                env.variables[varIndex].value = e.target.value;
+                saveEnvironments();
+            });
+        });
+
+        const deleteVarButtons = envDetails.querySelectorAll('.delete-var-button');
+        deleteVarButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const varIndex = e.target.dataset.index;
+                env.variables.splice(varIndex, 1);
+                saveEnvironments();
+                renderEnvDetails(envIndex);
+            });
+        });
+    }
+
+    addEnvButton.addEventListener('click', () => {
+        const newEnv = { name: `Env ${environments.length + 1}`, variables: [] };
+        environments.push(newEnv);
+        saveEnvironments();
+        renderEnvList();
+    });
+
+    renderEnvList();
+}
+
+// Добавляем кнопки при загрузке страницы
+window.addEventListener('load', addCustomButtons);
+
+// Проверяем наличие элементов каждые 500 миллисекунд для обновлений
+setInterval(addCustomButtons, 500);
