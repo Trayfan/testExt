@@ -1,7 +1,9 @@
+let dropdownCount = 0; // Счетчик для уникальных идентификаторов
+
 // Функция для добавления новой кнопки в меню
-function addSendToServerButton(menu) {
+function addSendToServerButton(menu, id) {
     // Проверим, нет ли уже кнопки в меню
-    if (menu.querySelector('[data-testid="menu_item__send_to_server"]')) {
+    if (menu.querySelector(`[data-testid="menu_item__send_to_server_${id}"]`)) {
         return;
     }
 
@@ -9,7 +11,7 @@ function addSendToServerButton(menu) {
     newItem.tabIndex = 0;
     newItem.role = 'button';
     newItem.className = 'Menu__item';
-    newItem.dataset.testid = 'menu_item__send_to_server';
+    newItem.dataset.testid = `menu_item__send_to_server_${id}`;
 
     // Создаем внутреннюю структуру элемента меню
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -21,14 +23,14 @@ function addSendToServerButton(menu) {
     svg.appendChild(use);
 
     const span = document.createElement('span');
-    span.innerHTML = '&nbsp;Отправить на сервер';
+    span.innerHTML = `&nbsp;Отправить на сервер (${id})`;
 
     newItem.appendChild(svg);
     newItem.appendChild(span);
 
     // Добавляем обработчик событий для кнопки
     newItem.addEventListener('click', () => {
-        openPopup();
+        openPopup(id);
     });
 
     // Вставим новый элемент в конец меню
@@ -36,32 +38,32 @@ function addSendToServerButton(menu) {
 }
 
 // Функция для открытия всплывающего окна
-function openPopup() {
+function openPopup(id) {
     const popup = document.createElement('div');
     popup.innerHTML = `
-      <div style="position: fixed; top: 20%; left: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid #ccc; padding: 20px; z-index: 1001;">
-        <textarea id="textInput" style="width: 300px; height: 100px;"></textarea>
-        <br>
-        <button id="submitBtn" style="margin-top: 10px; padding: 5px 10px; background-color: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">Submit</button>
-      </div>
-    `;
+    <div style="position: fixed; top: 20%; left: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid #ccc; padding: 20px; z-index: 1001;">
+      <textarea id="textInput" style="width: 300px; height: 100px;"></textarea>
+      <br>
+      <button id="submitBtn" style="margin-top: 10px; padding: 5px 10px; background-color: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">Submit</button>
+    </div>
+  `;
     document.body.appendChild(popup);
 
     document.getElementById('submitBtn').addEventListener('click', () => {
         const text = document.getElementById('textInput').value;
-        sendToServer(text);
+        sendToServer(text, id);
         document.body.removeChild(popup);
     });
 }
 
 // Функция для отправки данных на сервер
-function sendToServer(text) {
+function sendToServer(text, id) {
     fetch('http://localhost:3000/submit', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ text: text })
+        body: JSON.stringify({ text: text, dropdownId: id })
     })
         .then(response => response.json())
         .then(data => {
@@ -74,10 +76,15 @@ function sendToServer(text) {
 
 // Функция для проверки появления меню
 function checkForMenu() {
-    const menu = document.querySelector('.tippy-content');
-    if (menu) {
-        addSendToServerButton(menu);
-    }
+    const menus = document.querySelectorAll('.tippy-content');
+    menus.forEach((menu, index) => {
+        if (!menu.dataset.processed) {
+            dropdownCount += 1;
+            const id = dropdownCount; // Уникальный идентификатор для каждого меню
+            menu.dataset.processed = true; // Помечаем меню как обработанное
+            addSendToServerButton(menu, id);
+        }
+    });
 }
 
 // Проверяем наличие меню каждые 500 миллисекунд
