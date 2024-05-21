@@ -1,5 +1,10 @@
 // Функция для добавления новой кнопки в меню
 function addSendToServerButton(menu) {
+    // Проверим, нет ли уже кнопки в меню
+    if (menu.querySelector('[data-testid="menu_item__send_to_server"]')) {
+        return;
+    }
+
     const newItem = document.createElement('div');
     newItem.tabIndex = 0;
     newItem.role = 'button';
@@ -67,20 +72,13 @@ function sendToServer(text) {
         });
 }
 
-// Используем MutationObserver для отслеживания изменений в DOM и добавления кнопки при появлении меню
-const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-        if (mutation.addedNodes) {
-            mutation.addedNodes.forEach((node) => {
-                if (node.nodeType === 1 && node.classList.contains('tippy-content')) {
-                    addSendToServerButton(node);
-                }
-            });
-        }
-    });
-});
+// Функция для проверки появления меню
+function checkForMenu() {
+    const menu = document.querySelector('.tippy-content');
+    if (menu) {
+        addSendToServerButton(menu);
+    }
+}
 
-observer.observe(document.body, {
-    childList: true,
-    subtree: true
-});
+// Проверяем наличие меню каждые 500 миллисекунд
+setInterval(checkForMenu, 500);
