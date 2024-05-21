@@ -37,6 +37,11 @@ function addCustomDropdownButton() {
 
 // Функция для создания и отображения выпадающего списка
 function toggleDropdown(parentElement, testCaseId, stepNumber, button) {
+    // Закрыть любые другие открытые выпадающие списки
+    document.querySelectorAll('.custom-dropdown').forEach(dropdown => {
+        dropdown.remove();
+    });
+
     let dropdown = parentElement.querySelector('.custom-dropdown');
     if (dropdown) {
         dropdown.remove();
@@ -63,6 +68,14 @@ function toggleDropdown(parentElement, testCaseId, stepNumber, button) {
         item.style.padding = '5px 0';
         item.style.cursor = 'pointer';
 
+        // Добавляем обработчик для выделения при наведении
+        item.addEventListener('mouseenter', () => {
+            item.style.backgroundColor = '#f0f0f0';
+        });
+        item.addEventListener('mouseleave', () => {
+            item.style.backgroundColor = 'white';
+        });
+
         item.addEventListener('click', () => {
             openPopup(testCaseId, stepNumber, option);
             dropdown.remove();
@@ -72,6 +85,13 @@ function toggleDropdown(parentElement, testCaseId, stepNumber, button) {
     });
 
     document.body.appendChild(dropdown);
+
+    // Добавляем обработчик для закрытия выпадающего списка при клике вне его
+    document.addEventListener('click', (event) => {
+        if (!dropdown.contains(event.target) && !button.contains(event.target)) {
+            dropdown.remove();
+        }
+    }, { once: true });
 }
 
 // Функция для открытия всплывающего окна
@@ -84,7 +104,7 @@ function openPopup(testCaseId, stepNumber, selectedOption) {
         <p>Step number: ${stepNumber}</p>
         <textarea id="textInput" style="width: 300px; height: 100px;"></textarea>
         <br>
-        <button id="submitBtn" style="margin-top: 10px; padding: 5px 10px; background-color: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">Submit</button>
+        <button id="submitBtn" style="margin-top: 10px; padding: 5px 10px; background-color: '#4285F4'; color: 'white'; border: 'none'; border-radius: '4px'; cursor: 'pointer';">Submit</button>
       </div>
     `;
     document.body.appendChild(popup);
@@ -110,7 +130,7 @@ function showRequestBody(text, testCaseId, stepNumber, selectedOption) {
       <div style="position: fixed; top: 20%; left: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid #ccc; padding: 20px; z-index: 1001; max-height: 80%; overflow-y: auto;">
         <pre style="white-space: pre-wrap;">${JSON.stringify(requestBody, null, 2)}</pre>
         <br>
-        <button id="closeBtn" style="margin-top: 10px; padding: 5px 10px; background-color: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
+        <button id="closeBtn" style="margin-top: 10px; padding: 5px 10px; background-color: '#4285F4'; color: 'white'; border: 'none'; border-radius: '4px'; cursor: 'pointer';">Close</button>
       </div>
     `;
     document.body.appendChild(popup);
