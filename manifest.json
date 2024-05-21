@@ -15,8 +15,7 @@
             ],
             "js": [
                 "content.js"
-            ],
-            "type": "module"
+            ]
         }
     ],
     "icons": {
